@@ -35,10 +35,11 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: 🛠 Build dataset
-        run: poetry run make -C docs html
-        run: poetry run get-comments
-        run: mkdir -p out
-        run: poetry run publish
+        run: |
+          poetry run make -C docs html
+          poetry run get-comments
+          mkdir -p out
+          poetry run publish
 
       - name: 📌 Setup docs branch
         run: |
