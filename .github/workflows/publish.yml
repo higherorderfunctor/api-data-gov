@@ -36,9 +36,15 @@ jobs:
 
       - name: 🛠 Build dataset
         run: |
-          poetry run get-comments
+          MONGO_URI="${{ secrets.MONGO_URI }}" \
+          DOCKET_ID="${{ secrets.DOCKET_ID }}" \
+          API_KEY="${{ secrets.API_KEY }}" \
+            poetry run get-comments
           mkdir -p out
-          poetry run publish
+          MONGO_URI="${{ secrets.MONGO_URI }}" \
+          DOCKET_ID="${{ secrets.DOCKET_ID }}" \
+          API_KEY="${{ secrets.API_KEY }}" \
+            poetry run publish
 
       - name: 📌 Setup docs branch
         run: |

@@ -8,13 +8,13 @@ from datetime import datetime
 from itertools import chain
 from unittest import TestCase
 
+import ratelimit
 import pymongo
 import requests
 
 from backoff import on_exception, expo
 from nested_diff import diff
 from pandas import DataFrame as df
-from ratelimit import limits
 
 logging.basicConfig(stream=sys.stdout,
                     filemode="w",
@@ -29,7 +29,7 @@ HOUR_IN_MINUTES = 3600
 API_KEY = os.environ["API_KEY"]
 DOCKET_ID = os.environ["DOCKET_ID"]
 client = pymongo.MongoClient(os.environ["MONGO_URI"])
-db = client.get_database()["api-gov-data"]
+db = client.get_database()
 
 session = requests.Session()
 
@@ -42,9 +42,10 @@ class RateLimitException(requests.exceptions.RequestException):
 @on_exception(expo, (
     requests.exceptions.Timeout,
     requests.exceptions.ConnectionError,
+    ratelimit.RateLimitException,
     RateLimitException
 ))
-@limits(calls=1000, period=HOUR_IN_MINUTES)
+@ratelimit.limits(calls=1000, period=HOUR_IN_MINUTES)
 def get(url):
     response = session.get(url, headers={ "X-Api-Key": API_KEY })
     logger.debug(f"Response Code: {response.status_code}")
