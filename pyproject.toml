@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "api-data-gov"
+version = "0.1.0"
+description = ""
+authors = ["Christopher Aubut <christopher@aubut.me>"]
+
+[tool.poetry.scripts]
+get-comments = "api_data_gov.app:get_comments"
+publish = "api_data_gov.app:publish"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+jupyterlab = "^3.3.0"
+requests = "^2.27.1"
+ratelimit = "^2.2.1"
+backoff = "^1.11.1"
+pymongo = { version="^4.0.2", extras = ["srv"] }
+pandas = "^1.4.1"
+nested-diff = "^0.9"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
