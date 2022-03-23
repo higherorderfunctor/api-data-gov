@@ -20,11 +20,11 @@ logging.basicConfig(stream=sys.stdout,
                     filemode="w",
                     format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
                     datefmt="%H:%M:%S",
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 logger = logging.getLogger('api-data-gov')
 
-HOUR_IN_MINUTES = 3600
+HOUR_IN_SECONDS = 3600
 
 API_KEY = os.environ["API_KEY"]
 DOCKET_ID = os.environ["DOCKET_ID"]
@@ -44,12 +44,12 @@ class RateLimitException(requests.exceptions.RequestException):
     requests.exceptions.ConnectionError,
     ratelimit.RateLimitException,
     RateLimitException
-))
-@ratelimit.limits(calls=1000, period=HOUR_IN_MINUTES)
+), max_time=HOUR_IN_SECONDS)
+@ratelimit.limits(calls=1000, period=HOUR_IN_SECONDS)
 def get(url):
     response = session.get(url, headers={ "X-Api-Key": API_KEY })
-    logger.debug(f"Response Code: {response.status_code}")
-    logger.debug(pprint.pformat(response.headers, indent=2))
+    logger.info(f"Response Code: {response.status_code}")
+    logger.info(pprint.pformat(response.headers, indent=2))
     if response.status_code == 429:
         raise RateLimitException(response.reason)
     if response.status_code != 200:
