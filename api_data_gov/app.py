@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import pprint
 import pytz
@@ -20,7 +21,7 @@ logging.basicConfig(stream=sys.stdout,
                     filemode="w",
                     format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
                     datefmt="%H:%M:%S",
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 logger = logging.getLogger('api-data-gov')
 
@@ -44,17 +45,24 @@ class RateLimitException(requests.exceptions.RequestException):
     requests.exceptions.ConnectionError,
     ratelimit.RateLimitException,
     RateLimitException
-), max_time=HOUR_IN_SECONDS)
+), max_tries=100, max_time=math.floor(HOUR_IN_SECONDS * 1.1))
 @ratelimit.limits(calls=1000, period=HOUR_IN_SECONDS)
 def get(url):
+    logger.info(url)
     response = session.get(url, headers={ "X-Api-Key": API_KEY })
     logger.info(f"Response Code: {response.status_code}")
     logger.info(pprint.pformat(response.headers, indent=2))
+    logger.info(pprint.pformat({
+        key: value
+        for key, value in json.loads(response.text).items()
+        if key != "data"
+    }, indent=2))
     if response.status_code == 429:
         raise RateLimitException(response.reason)
     if response.status_code != 200:
         logger.error(f"HTTP error: {response.reason}")
-    logger.debug(pprint.pformat(json.loads(response.text), indent=2))
+        raise RuntimeError(pprint.pformat(json.loads(response.text), indent=2))
+    logger.debug(pprint.pformat(json.loads(response.text)["data"], indent=2))
     return json.loads(response.text)
 
 
@@ -97,8 +105,9 @@ def get_comment(url):
 
 
 def get_comments():
+    last_modified_date_filter = None
     params = {
-        "page": { "number": 1, "size": 25 },
+        "page": { "number": 1, "size": 250 },
         "sort": "lastModifiedDate",
         "filter": {
             "docketId": DOCKET_ID
@@ -119,8 +128,11 @@ def get_comments():
                         .astimezone(pytz.timezone("America/New_York"))
                         .strftime("%Y-%m-%d %H:%M:%S")
             }
-            continue
-        params["page"]["number"] = int(response["meta"]["pageNumber"]) + 1
+            if last_modified_date_filter is not None and last_modified_date_filter == params["filter"]["lastModifiedDate"]["ge"]:
+                return
+            last_modified_date_filter = params["filter"]["lastModifiedDate"]["ge"]
+        else:
+            params["page"]["number"] = int(response["meta"]["pageNumber"]) + 1
 
 def publish():
     df.from_dict(
