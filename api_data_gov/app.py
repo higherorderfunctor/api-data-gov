@@ -45,7 +45,7 @@ class RateLimitException(requests.exceptions.RequestException):
     requests.exceptions.ConnectionError,
     ratelimit.RateLimitException,
     RateLimitException
-), max_tries=100, max_time=math.floor(HOUR_IN_SECONDS * 1.1))
+), max_time=math.floor(HOUR_IN_SECONDS * 2))
 @ratelimit.limits(calls=1000, period=HOUR_IN_SECONDS)
 def get(url):
     logger.info(url)
