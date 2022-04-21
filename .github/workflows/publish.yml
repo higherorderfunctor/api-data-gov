@@ -3,8 +3,6 @@ name: 🚀 publish
 on:
   push:
     branches: [ main ]
-  schedule:
-    - cron:  '5 0 * * *'
 
 jobs:
   publish:
